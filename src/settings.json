@@ -1,0 +1,31 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '{\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": (\"CLAUDE_SESSION_ID: \" + .session_id)}}'"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/hooks/status-line.sh"
+  },
+  "enabledPlugins": {
+    "skill-plugin@my-plugins": true,
+    "todo-plugin@my-plugins": true
+  },
+  "extraKnownMarketplaces": {
+    "my-plugins": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/efraim/Developer/dotclaude/src/plugins"
+      }
+    }
+  },
+  "effortLevel": "high"
+}
