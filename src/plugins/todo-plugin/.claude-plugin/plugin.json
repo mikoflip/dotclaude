@@ -1,0 +1,5 @@
+{
+  "name": "todo",
+  "description": "Task management plugin for initializing, populating, and generating suggestions for TODO.md",
+  "version": "1.0.0"
+}
