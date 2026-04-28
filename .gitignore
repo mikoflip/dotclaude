@@ -1,0 +1,9 @@
+# Directories to ignore
+.idea/
+.vscode/
+.zed/
+
+# Files to ignore
+*.cache
+*.swp
+.DS_Store
