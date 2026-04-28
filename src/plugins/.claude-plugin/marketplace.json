@@ -1,0 +1,13 @@
+{
+  "name": "my-plugins",
+  "owner": {
+    "name": "Efraim"
+  },
+  "metadata": {
+    "description": "My personal plugin collection"
+  },
+  "plugins": [
+    { "name": "skill-plugin", "source": "./skill-plugin" },
+    { "name": "todo-plugin", "source": "./todo-plugin" }
+  ]
+}

@@ -1,0 +1,7 @@
+- [ ] **{ITEM_TITLE}**
+  - Description: {BRIEF_ITEM_DESCRIPTION}
+  - Motivation: {BRIEF_ITEM_MOTIVATION}
+  - Estimated Effort: {ESTIMATED_EFFORT}
+  - Impacted Files:
+    - `{RELATIVE_FILE_PATH}`
+    - `{RELATIVE_FILE_PATH}`

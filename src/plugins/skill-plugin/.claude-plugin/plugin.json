@@ -1,0 +1,5 @@
+{
+  "name": "skill",
+  "description": "Plugin for reviewing and evaluating Claude skills against the Agent Skills specification and best practices",
+  "version": "1.0.0"
+}
