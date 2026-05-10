@@ -73,3 +73,7 @@ After adding a skill, run `./install.sh` then `./status.sh` to verify deployment
 1. `/init-md` — scaffold `TODO.md` with priority sections
 2. `/suggest` — analyze the codebase and generate ranked improvement suggestions
 3. `/add` — convert selected suggestions into tracked TODO items
+
+**analysis-plugin** — two web-research skills:
+- `/compare` — produce a structured side-by-side comparison of two or more entries
+- `/describe` — produce a structured description of any concept, technology, or topic
