@@ -17,13 +17,14 @@
   },
   "enabledPlugins": {
     "skill-plugin@my-plugins": true,
-    "todo-plugin@my-plugins": true
+    "todo-plugin@my-plugins": true,
+    "analysis-plugin@my-plugins": true
   },
   "extraKnownMarketplaces": {
     "my-plugins": {
       "source": {
         "source": "directory",
-        "path": "/Users/efraim/Developer/dotclaude/src/plugins"
+        "path": "plugins"
       }
     }
   },
