@@ -59,6 +59,10 @@ src/
 - `/suggest` — analyze the codebase and generate ranked improvement suggestions
 - `/add` — convert selected suggestions into tracked TODO items
 
+**analysis-plugin** — two web-research skills:
+- `/compare` — produce a structured side-by-side comparison of two or more entries
+- `/describe` — produce a structured description of any concept, technology, or topic
+
 ## Adding Skills
 
 **Simple skill** (preferred): add `src/skills/<skill-name>/SKILL.md`.
