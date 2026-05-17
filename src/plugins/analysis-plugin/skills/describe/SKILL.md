@@ -1,7 +1,7 @@
 ---
 name: describe
 description: Researches any concept, technology, entity, or topic using web search and produces a structured description with fixed fields: Overview, Origin, Defining Features, Applications, Caveats, and Further Reading. Confirms the intended subject before generating output. Use when the user wants to describe, explain, research, or get an overview of any concept, technology, or topic.
-allowed-tools: [Read, WebSearch, WebFetch]
+allowed-tools: [WebSearch, WebFetch]
 argument-hint: "<subject>"
 ---
 
@@ -11,7 +11,21 @@ argument-hint: "<subject>"
 3. Present findings and ask: `Describing: "{CANONICAL_NAME}" ({DOMAIN}) — is this correct? [Yes / No / Clarify: ...]` and *STOP*. On the next turn: if "No" or a clarification is given, revise the search target and repeat Step 2 once. If the subject remains unresolvable, print `Subject could not be identified. Please provide a more specific term.` and *STOP*
 4. WebSearch the confirmed subject 2–4 more times, targeting: defining features, applications, caveats, origin, and notable facts. If any query returns no results, reformulate and retry once before continuing.
 5. WebFetch any result from Step 4 that appears to be a primary source (documentation, reference page, or detailed article) rather than a summary or listicle.
-6. Read [Description Template](templates/description-item.md). Synthesize retrieved content into it, populating all fixed fields; include **Origin** only if provenance is clearly established (known author, date, or originating work)
+6. Synthesize retrieved content into the following structure, populating all fixed fields; include **Origin** only if provenance is clearly established (known author, date, or originating work):
+   ```
+   **Topic**: {CANONICAL_NAME}
+   **Domain**: {DOMAIN}
+   **Overview**: {TWO_TO_THREE_SENTENCE_OVERVIEW}
+   **Origin** *(optional)*: {PROVENANCE}
+   **Defining Features**:
+   - {FEATURE}
+   **Applications**:
+   - {APPLICATION}
+   **Caveats**:
+   - {CAVEAT}
+   **Further Reading**:
+   - {RESOURCE_TITLE}: {URL_OR_CITATION}
+   ```
 7. Print the structured description. Then *STOP*
 
 ## Constraints
