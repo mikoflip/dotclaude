@@ -77,3 +77,9 @@ After adding a skill, run `./install.sh` then `./status.sh` to verify deployment
 **analysis-plugin** — two web-research skills:
 - `/compare` — produce a structured side-by-side comparison of two or more entries
 - `/describe` — produce a structured description of any concept, technology, or topic
+
+**sdd-plugin** — four composable skills for spec-driven development in a worktree-first workflow (each worktree/branch is one feature; skills derive the feature slug from the current branch name, no arguments needed except `specify`'s initial description):
+1. `/preflight` — check the working tree is clean and on a dedicated feature branch before starting
+2. `/specify` — turn a short feature idea into a numbered spec under `_specs/`
+3. `/plan` — turn a ready spec into a numbered implementation plan with a task checklist under `_plans/`
+4. `/implement` — execute a ready plan's task checklist against the codebase, resumable across invocations

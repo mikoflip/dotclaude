@@ -9,6 +9,7 @@
   "plugins": [
     { "name": "skill-plugin", "source": "./skill-plugin" },
     { "name": "todo-plugin", "source": "./todo-plugin" },
-    { "name": "analysis-plugin", "source": "./analysis-plugin" }
+    { "name": "analysis-plugin", "source": "./analysis-plugin" },
+    { "name": "sdd-plugin", "source": "./sdd-plugin" }
   ]
 }
