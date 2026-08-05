@@ -87,6 +87,30 @@ link_item() {
     success "Linked: ${label}"
 }
 
+# ── normalize_marketplace_path: undo absolute-path write-through ──────────────
+# The `claude` CLI resolves the marketplace directory to an absolute path and
+# writes it into settings.json. Since settings.json is symlinked to
+# src/settings.json, that absolute path (specific to this machine) would land
+# in git-tracked source. Rewrite it back to the relative "plugins" path,
+# which is what the repo always commits.
+normalize_marketplace_path() {
+    local name="$1"
+    local settings_file="${SRC_DIR}/settings.json"
+
+    [[ -f "${settings_file}" ]] || return 0
+
+    local current_path
+    current_path="$(jq -r --arg name "${name}" '.extraKnownMarketplaces[$name].source.path // ""' "${settings_file}")"
+
+    if [[ "${current_path}" == /* ]]; then
+        local tmp
+        tmp="$(mktemp)"
+        jq --arg name "${name}" '.extraKnownMarketplaces[$name].source.path = "plugins"' \
+            "${settings_file}" > "${tmp}" && mv "${tmp}" "${settings_file}"
+        warn "Normalized leaked absolute path in settings.json → relative \"plugins\""
+    fi
+}
+
 # ── unlink_item: remove a managed symlink ─────────────────────────────────────
 unlink_item() {
     local target="$1"
@@ -219,12 +243,21 @@ if [[ -d "${plugins_dir}" ]]; then
         warn "No marketplace manifest found at plugins/.claude-plugin/marketplace.json"
         warn "Skipping plugin registration."
     else
+        marketplace_name="$(jq -r '.name' "${marketplace_json}")"
+
         # Step 1: register the local directory as a marketplace (idempotent)
         run "claude plugin marketplace add '${plugins_dir}'"
         $DRY_RUN || success "Marketplace registered: ${plugins_dir}"
 
-        # Step 2: read marketplace name and install each listed plugin
-        marketplace_name="$(jq -r '.name' "${marketplace_json}")"
+        # `claude plugin marketplace add` writes the absolute ${plugins_dir}
+        # path into settings.json's extraKnownMarketplaces.<name>.source.path.
+        # settings.json is a symlink back into this repo (src/settings.json),
+        # so that write-through would otherwise leak this machine's absolute
+        # path into git-tracked source. Normalize it back to the relative
+        # "plugins" path immediately so the leak never reaches a commit.
+        $DRY_RUN || normalize_marketplace_path "${marketplace_name}"
+
+        # Step 2: install each listed plugin
         echo
         info "Installing plugins from marketplace '${marketplace_name}' …"
         while IFS= read -r plugin_name; do

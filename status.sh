@@ -138,6 +138,25 @@ fi
 header "3. Plugins"
 rule
 
+# `claude plugin marketplace add` writes an absolute path into settings.json's
+# extraKnownMarketplaces.*.source.path; since settings.json is symlinked back
+# into src/settings.json, that machine-specific absolute path can leak into
+# git-tracked source. install.sh normalizes it back to "plugins" after every
+# registration, so a leaked absolute path here means that step was skipped or
+# regressed — flag it.
+settings_json="${SRC_DIR}/settings.json"
+if [[ -f "${settings_json}" ]]; then
+    leaked_paths="$(jq -r '.extraKnownMarketplaces // {} | to_entries[] | select(.value.source.path? and (.value.source.path | startswith("/"))) | "\(.key): \(.value.source.path)"' "${settings_json}" 2>/dev/null || true)"
+    if [[ -n "${leaked_paths}" ]]; then
+        warn "settings.json has a leaked absolute marketplace path — re-run install.sh:"
+        while IFS= read -r line; do
+            printf '      \033[0;33m%s\033[0m\n' "${line}"
+        done <<< "${leaked_paths}"
+    else
+        $SHORT || ok "settings.json marketplace paths are relative"
+    fi
+fi
+
 if [[ ! -f "${MARKETPLACE_JSON}" ]]; then
     absent "No marketplace.json found at plugins/.claude-plugin/marketplace.json"
 elif ! command -v claude &>/dev/null; then
