@@ -1,5 +1,5 @@
 {
   "name": "sdd",
-  "description": "Spec-driven development plugin for a worktree-first workflow: preflight, specify, plan, and implement a feature as a resumable pipeline",
+  "description": "Spec-driven development plugin for a worktree-first workflow: project, preflight, specify, plan, and implement a feature as a resumable pipeline",
   "version": "1.0.0"
 }
