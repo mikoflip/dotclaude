@@ -35,7 +35,8 @@ src/
 ├── plugins/          # Local plugin marketplace
 ├── skills/           # Local skills (non-plugin)
 ├── agents/           # Remote agents
-└── commands/         # Slash commands
+├── commands/         # Slash commands
+└── knowledge/        # Personal working notes and references
 ```
 
 `install.sh` creates `~/.claude/<dir>/` as a real directory, then symlinks each child individually — letting Claude Code write runtime files without polluting the repo.

@@ -28,6 +28,7 @@ USER_AUTHORED=(
     agents
     commands
     hooks
+    knowledge
 )
 
 # ── helpers ───────────────────────────────────────────────────────────────────
