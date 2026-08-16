@@ -7,3 +7,4 @@
 *.cache
 *.swp
 .DS_Store
+src/mcp.env

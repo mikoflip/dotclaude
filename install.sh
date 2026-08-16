@@ -112,6 +112,28 @@ normalize_marketplace_path() {
     fi
 }
 
+# ── resolve_mcp_json: substitute ${VAR} placeholders from src/mcp.env ─────────
+# src/mcp.json is tracked and machine-agnostic; machine-specific values (e.g.
+# absolute paths) live in src/mcp.env (gitignored, one KEY=VALUE per line) and
+# are substituted in here via plain bash string replacement — no envsubst
+# dependency, keeping jq as the repo's one hard dependency.
+resolve_mcp_json() {
+    local mcp_json="${SRC_DIR}/mcp.json"
+    local mcp_env="${SRC_DIR}/mcp.env"
+    local content
+    content="$(cat "${mcp_json}")"
+
+    if [[ -f "${mcp_env}" ]]; then
+        local key value
+        while IFS='=' read -r key value; do
+            [[ -z "${key}" || "${key}" == \#* ]] && continue
+            content="${content//\$\{${key}\}/${value}}"
+        done < "${mcp_env}"
+    fi
+
+    printf '%s' "${content}"
+}
+
 # ── unlink_item: remove a managed symlink ─────────────────────────────────────
 unlink_item() {
     local target="$1"
@@ -177,6 +199,24 @@ if $UNINSTALL; then
         done < <(jq -r '.plugins[].name' "${marketplace_json}")
         run "claude plugin marketplace remove '${marketplace_name}'"
         $DRY_RUN || success "Marketplace removed: ${marketplace_name}"
+    fi
+
+    # Unregister MCP servers
+    mcp_json="${SRC_DIR}/mcp.json"
+    if [[ -f "${mcp_json}" ]] && command -v claude &>/dev/null; then
+        echo
+        info "Unregistering MCP servers …"
+        while IFS= read -r server_name; do
+            if $DRY_RUN; then
+                run "claude mcp remove '${server_name}' -s user"
+            else
+                if claude mcp remove "${server_name}" -s user 2>/dev/null; then
+                    success "Unregistered: ${server_name}"
+                else
+                    skip "Not registered (already clean): ${server_name}"
+                fi
+            fi
+        done < <(jq -r 'keys[]' "${mcp_json}")
     fi
 
     echo
@@ -265,6 +305,40 @@ if [[ -d "${plugins_dir}" ]]; then
             run "claude plugin install '${plugin_name}@${marketplace_name}'"
             $DRY_RUN || success "Installed: ${plugin_name}"
         done < <(jq -r '.plugins[].name' "${marketplace_json}")
+    fi
+fi
+
+# ── register MCP servers ──────────────────────────────────────────────────────
+# src/mcp.json declares user-scoped MCP servers by name. Machine-specific
+# placeholders (e.g. ${PLAYWRIGHT_MCP_DIR}) are resolved from src/mcp.env.
+mcp_json="${SRC_DIR}/mcp.json"
+if [[ -f "${mcp_json}" ]]; then
+    echo
+    info "Registering MCP servers …"
+    if ! command -v claude &>/dev/null; then
+        warn "claude not found in PATH — skipping MCP server registration."
+        warn "Re-run install.sh after Claude Code is installed."
+    elif ! command -v jq &>/dev/null; then
+        warn "jq not found in PATH — skipping MCP server registration."
+    else
+        if [[ ! -f "${SRC_DIR}/mcp.env" ]]; then
+            warn "No src/mcp.env found — copy src/mcp.env.example and fill in your paths."
+            warn "Unresolved \${VAR} placeholders will be registered literally."
+        fi
+
+        resolved_mcp_json="$(resolve_mcp_json)"
+
+        # `claude mcp add-json` errors on a name that already exists (not
+        # idempotent like `claude plugin install`), so check first via `get`.
+        while IFS= read -r server_name; do
+            server_config="$(printf '%s' "${resolved_mcp_json}" | jq -c --arg name "${server_name}" '.[$name]')"
+            if claude mcp get "${server_name}" &>/dev/null; then
+                skip "Already registered: ${server_name}"
+            else
+                run "claude mcp add-json '${server_name}' '${server_config}' -s user"
+                $DRY_RUN || success "Registered MCP server: ${server_name}"
+            fi
+        done < <(printf '%s' "${resolved_mcp_json}" | jq -r 'keys[]')
     fi
 fi
 

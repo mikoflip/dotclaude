@@ -12,17 +12,19 @@ cd dotclaude
 
 Run `./status.sh` to verify the installation.
 
+If `src/mcp.json` declares any MCP servers, copy `src/mcp.env.example` to `src/mcp.env` and fill in the machine-specific values (e.g. absolute paths) it references before running `install.sh` — see [MCP Servers](#mcp-servers).
+
 ## Scripts
 
 | Command | Description |
 |---|---|
-| `./install.sh` | Symlink `src/` into `~/.claude` and register plugins (idempotent) |
+| `./install.sh` | Symlink `src/` into `~/.claude`, register plugins, and register MCP servers (idempotent) |
 | `./install.sh --dry-run` | Preview without making changes |
-| `./install.sh --uninstall` | Remove managed symlinks and unregister plugins |
+| `./install.sh --uninstall` | Remove managed symlinks and unregister plugins and MCP servers |
 | `./reset-claude.sh` | Archive `~/.claude`, then re-run `install.sh` (preserves auth) |
 | `./reset-claude.sh --dry-run` | Preview without making changes |
 | `./reset-claude.sh --full` | Also archive `~/.claude.json` (requires re-login) |
-| `./status.sh` | Check symlink integrity and plugin registration |
+| `./status.sh` | Check symlink integrity, plugin registration, and MCP server registration |
 | `./status.sh --short` | CI-friendly one-liner (exit 1 if unhealthy) |
 
 ## Structure
@@ -31,6 +33,8 @@ Run `./status.sh` to verify the installation.
 src/
 ├── CLAUDE.md         # Global Claude Code instructions
 ├── settings.json     # Hooks, plugins, effortLevel
+├── mcp.json          # User-scoped MCP server declarations
+├── mcp.env.example   # Template for machine-specific mcp.json placeholders
 ├── hooks/            # Scripts triggered by Claude Code events
 ├── plugins/          # Local plugin marketplace
 ├── skills/           # Local skills (non-plugin)
@@ -70,6 +74,12 @@ src/
 - `/specify` — turn a short feature idea into a numbered spec under `_specs/`
 - `/plan` — turn a ready spec into a numbered implementation plan with a task checklist under `_plans/`
 - `/implement` — execute a ready plan's task checklist against the codebase, resumable across invocations
+
+## MCP Servers
+
+`src/mcp.json` declares user-scoped MCP servers by name, in the same shape `claude mcp add-json` expects per-server. Machine-specific values (absolute paths, secrets) aren't hardcoded into the tracked JSON — they're referenced as `${PLACEHOLDER}` and resolved at install time from `src/mcp.env` (gitignored). Copy `src/mcp.env.example` to `src/mcp.env` and fill in the values it documents before running `install.sh`.
+
+**playwright** — browser automation via `@playwright/mcp`
 
 ## Adding Skills
 
