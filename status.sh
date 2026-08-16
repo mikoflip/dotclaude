@@ -17,6 +17,7 @@ CLAUDE_DIR="${HOME}/.claude"
 CLAUDE_JSON="${HOME}/.claude.json"
 PLUGINS_DIR="${SRC_DIR}/plugins"
 MARKETPLACE_JSON="${PLUGINS_DIR}/.claude-plugin/marketplace.json"
+MCP_JSON="${SRC_DIR}/mcp.json"
 SHORT=false
 ISSUES=0
 
@@ -199,9 +200,48 @@ else
 fi
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 4. REPO DRIFT (uncommitted changes)
+# 4. MCP SERVER REGISTRATION
 # ══════════════════════════════════════════════════════════════════════════════
-header "4. Repo drift"
+header "4. MCP Servers"
+rule
+
+if [[ ! -f "${MCP_JSON}" ]]; then
+    absent "No mcp.json found at src/mcp.json"
+elif ! command -v claude &>/dev/null; then
+    warn "claude not in PATH — cannot check MCP server registration"
+elif ! command -v jq &>/dev/null; then
+    warn "jq not in PATH — cannot check MCP server registration"
+else
+    mcp_ok=0
+    mcp_warn=0
+
+    while IFS= read -r server_name; do
+        if claude mcp get "${server_name}" &>/dev/null; then
+            $SHORT || ok "  ${server_name}"
+            (( mcp_ok++ )) || true
+        else
+            warn "${server_name}  not registered (run install.sh)"
+            (( mcp_warn++ )) || true
+        fi
+    done < <(jq -r 'keys[]' "${MCP_JSON}")
+
+    if $SHORT; then
+        if [[ "${mcp_warn}" -eq 0 ]]; then
+            ok "${mcp_ok} MCP servers registered"
+        else
+            warn "${mcp_ok} registered, ${mcp_warn} missing"
+        fi
+    fi
+
+    if [[ ! -f "${SRC_DIR}/mcp.env" ]]; then
+        $SHORT || info "No src/mcp.env — copy src/mcp.env.example and fill in your paths"
+    fi
+fi
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 5. REPO DRIFT (uncommitted changes)
+# ══════════════════════════════════════════════════════════════════════════════
+header "5. Repo drift"
 rule
 
 if ! command -v git &>/dev/null; then
