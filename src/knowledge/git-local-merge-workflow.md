@@ -22,7 +22,9 @@ Note the PR number returned (e.g. #7).
 ```bash
 cd <main-worktree>
 git pull
-git merge --no-ff <branch-name> -m "Merge pull request #<N> from <github-username>/<branch-name>"
+git merge --no-ff <branch-name> \
+  -m "Merge pull request #<N> from <github-username>/<branch-name>" \
+  -m "$(git log -1 --format='%s' <branch-name>)"
 ```
 
 **Push the merge**
