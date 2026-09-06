@@ -1,4 +1,10 @@
 {
+  "apple-notes": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "apple-notes-mcp"],
+    "env": {}
+  },
   "playwright": {
     "type": "stdio",
     "command": "npx",

@@ -11,6 +11,10 @@
       }
     ]
   },
+  "worktree": {
+    "baseRef": "fresh"
+  },
+  "enableArtifact": false,
   "statusLine": {
     "type": "command",
     "command": "~/.claude/hooks/status-line.sh"
@@ -29,5 +33,7 @@
       }
     }
   },
-  "effortLevel": "high"
+  "effortLevel": "high",
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true
 }

@@ -79,6 +79,8 @@ src/
 
 `src/mcp.json` declares user-scoped MCP servers by name, in the same shape `claude mcp add-json` expects per-server. Machine-specific values (absolute paths, secrets) aren't hardcoded into the tracked JSON — they're referenced as `${PLACEHOLDER}` and resolved at install time from `src/mcp.env` (gitignored). Copy `src/mcp.env.example` to `src/mcp.env` and fill in the values it documents before running `install.sh`.
 
+**apple-notes** — read and search Apple Notes via `apple-notes-mcp` (AppleScript-based, macOS-only)
+
 **playwright** — browser automation via `@playwright/mcp`
 
 ## Adding Skills
