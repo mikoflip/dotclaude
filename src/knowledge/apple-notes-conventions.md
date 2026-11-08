@@ -1,58 +1,11 @@
 # Apple Notes Conventions
 
 ## Overview
-Conventions for reading, creating, and editing notes in the user's Apple Notes app (synced via iCloud). Two distinct tool sets now reach Apple Notes:
+Conventions for reading, creating, and editing notes in the user's Apple Notes app (synced via iCloud). They govern **both Claude Code and Claude Desktop**.
 
-- **Claude Desktop** — the built-in `list_notes`, `get_note_content`, `add_note`, `update_note_content` tools (underscore-named).
-- **Claude Code** — the `apple-notes` MCP server (`apple-notes-mcp` npm package), exposing a larger, hyphen-named tool set (`list-notes`, `get-note-content`, `create-note`, `update-note`, `search-notes`, `move-note`, and others).
+Both hosts use the same tool set: the `apple-notes` MCP server (`apple-notes-mcp` npm package), a stdio server. Each host runs its own instance, and both drive the same Notes.app via AppleScript, so behavior, data, and quirks are identical regardless of host.
 
-Both talk to the same Notes.app via AppleScript, so the underlying data and its quirks are shared. Naming convention alone (underscore vs. hyphen) tells you which environment you're in. Formatting itself is governed by a separate **Apple Notes Style Guide** note maintained in the app — consult it via the relevant `get_note_content` / `get-note-content` tool rather than duplicating its rules here; this file covers tool behavior and workflow only.
-
-## Shared principles (apply in both environments)
-
-### Verify before acting
-List notes or read full note content before editing, summarizing, or referencing them — never infer a note's contents or structure from its title alone. When editing an existing note, preserve all sections not explicitly being changed.
-
-### Confirm before creating or editing
-Any note creation or edit requires an inline draft or diff and explicit user confirmation beforehand, particularly when the target note is ambiguous or the change is hard to reverse.
-
-### Never delete
-Notes are never deleted by Claude in either environment, regardless of confirmation. This holds even though the Claude Code tool set technically exposes `delete-note`, `batch-delete-notes`, and `delete-folder` (the underlying app-level operations move items to Recently Deleted rather than purging them immediately). Treat those three tools as off-limits by policy, not by capability — direct the user to delete the note or folder themselves in the Notes app.
-
-### Match existing conventions
-Follow the language, tone, and formatting already established in a note (e.g. Dutch vs. English) unless the user instructs otherwise.
-
-### Handle sensitive content with care
-Notes may hold sensitive data. Reference such content only as needed for the task at hand, and never transcribe it into external destinations (messages, uploads, third-party services) without explicit instruction.
-
-### Verify writes, don't trust success messages
-In both environments, a tool's success response is not reliable evidence that markup rendered correctly. Always re-read the note afterward (`get_note_content` / `get-note-content`) before treating a write as done.
-
-### Checklists cannot be created programmatically
-Apple Notes stores checklist state as a paragraph style AppleScript does not expose, and writing it directly to the underlying database is unsafe. In **both** environments, checkbox markup — native `class="checklist"` / `<input type="checkbox">` in Claude Desktop, or the same in Claude Code's `format: "html"` content — is silently stripped or collapsed on save, leaving a plain bullet with no error. Use Markdown-style plain text instead in both: `- [ ] item` / `- [x] item` as its own line, no `<ul>` wrapper, since the leading `-` already serves as the marker. If a checklist already exists (created manually in-app), Claude Code's `get-checklist-state` and `get-note-markdown` can read its done/undone state, but this requires Full Disk Access (see below) and neither environment can create one.
-
----
-
-## Environment: Claude Desktop (`list_notes` / `get_note_content` / `add_note` / `update_note_content`)
-
-### Title handling differs between creation and edit
-`add_note`'s `name` parameter already renders as the note's title — never repeat it as a heading inside `content`. `update_note_content` has no `name` parameter; it derives the title from `content`'s first line, so that call must always open with a single styled title line matching the Style Guide's heading format.
-
-### `add_note` ampersand and title-styling quirks
-`add_note`'s `name` parameter is not HTML-decoded — pass a literal `&` directly, never `&amp;`, or the entity text appears verbatim in the title. Separately, because `content` must omit the title line (to avoid the duplicate-title bug above), a note created via `add_note` ends up with a plain, unstyled title rather than the Style Guide's bold heading. Every `add_note` call therefore needs an immediate `update_note_content` follow-up that supplies a single styled title line to fix this.
-
-### In-bullet line breaks fail silently
-In-bullet breaks (`<br>` inside `<li>`, nested `<div>` inside `<li>`, literal newlines inside `<li>`) are stripped or collapsed on save without error, independent of the checklist issue above.
-
-### No folder or delete tools
-This tool set has no create-folder, move, search, or delete capability. If a note needs to go in a specific folder, ask the user to create it in the Notes app first — a bare folder name resolves correctly even when nested.
-
----
-
-## Environment: Claude Code (`apple-notes` MCP server, package `apple-notes-mcp`)
-
-### Tool surface
-Notably larger than Claude Desktop's four tools. Frequently relevant ones:
+Frequently relevant tools:
 
 | Purpose | Tool |
 |---|---|
@@ -67,39 +20,81 @@ Notably larger than Claude Desktop's four tools. Frequently relevant ones:
 | Attachments | `list-attachments`, `save-attachment`, `fetch-attachment` |
 | Diagnostics | `doctor`, `health-check` |
 
-(`delete-note`, `batch-delete-notes`, `delete-folder` also exist but are excluded by the Never Delete principle above.)
+Formatting is governed by a separate **Apple Notes Style Guide** note kept in the app — read it with `get-note-content` when needed rather than duplicating its rules here. The Style Guide and the **Planning Note Template** are themselves Apple Notes, not files; never assume their contents from memory.
 
-### Title handling is automatic on create — no follow-up needed
-`create-note` auto-prepends `title` as a styled `<h1>` in both `plaintext` and `html` formats. Do **not** include the title inside `content` (it would then appear twice), and — unlike Claude Desktop's `add_note` — do **not** issue a follow-up styling call; `create-note` already produces a correctly styled heading in one call.
+## Governing principles
 
-### `update-note` replaces the entire body; use `append-to-note` for additive edits
-`update-note`'s `newContent` **replaces** the note body rather than appending to it. To preserve existing content, read it first with `get-note-content` and include it in `newContent` — or, for purely additive changes, prefer `append-to-note`, which reads and writes as HTML and preserves existing rich formatting automatically.
+### Verify before acting
+List notes or read full note content before editing, summarizing, or referencing them — never infer a note's contents or structure from its title alone. When editing, preserve every section not explicitly being changed.
+
+### Confirm before creating or editing
+Any note creation or edit requires an inline draft or diff and explicit user confirmation beforehand, especially when the target note is ambiguous or the change is hard to reverse. The same applies to creating a folder whose necessity or name is ambiguous.
+
+### Deletion (soft-delete only)
+Claude may move a note or folder to Recently Deleted via delete-note / delete-folder when either: (a) the item was created by Claude earlier in the same task and is being cleaned up as a superseded duplicate, or (b) the user gives explicit, per-item confirmation. Claude states which item(s) it's about to move before calling the tool. batch-delete-notes requires the user to have reviewed and confirmed the full list first. Claude never empties Recently Deleted or otherwise purges data permanently; "delete" here always means recoverable.
+
+### Match existing conventions
+Follow the language, tone, and formatting already established in a note (e.g. Dutch vs. English) unless the user instructs otherwise.
+
+### Handle sensitive content with care
+Notes may hold sensitive data. Reference it only as far as the task needs, and never transcribe it into external destinations (messages, uploads, third-party services) without explicit instruction.
+
+### Verify writes
+A tool's success response is not evidence that markup rendered correctly. Always re-read the note with `get-note-content` after a write before treating it as done.
+
+### Checklists cannot be created programmatically
+Apple Notes stores checklist state as a paragraph style AppleScript does not expose. Checkbox markup (`class="checklist"` / `<input type="checkbox">` in `format: "html"` content) is silently stripped or collapsed on save, leaving a plain bullet with no error. Use Markdown-style plain text instead: `- [ ] item` / `- [x] item` on its own line, no `<ul>` wrapper, since the leading `-` already serves as the marker. For a checklist created manually in-app, `get-checklist-state` and `get-note-markdown` can read its done/undone state (needs Full Disk Access — see Permissions), but no tool can create one.
+
+## Tool behavior
+
+### Title handling is automatic on create
+`create-note` auto-prepends `title` as a styled `<h1>` in both `plaintext` and `html` formats. Do **not** repeat the title inside `content` (it would then appear twice), and do **not** issue a follow-up styling call — one `create-note` call produces the correctly styled heading.
+
+### `update-note` replaces the entire body
+`update-note`'s `newContent` replaces the note body rather than appending. To preserve existing content, read it first with `get-note-content` and include it in `newContent` — or, for purely additive changes, use `append-to-note`, which reads and writes HTML and preserves existing rich formatting automatically.
 
 ### Attachments can be silently dropped on full-body rewrites
-Before calling `update-note` or `append-to-note` on a note that may contain embedded files, images, scans, PDFs, or audio, run `list-attachments` first. If attachments are present, either preserve them via `save-attachment` / `fetch-attachment` before rewriting, or avoid a full-body replace altogether (e.g. use `append-to-note`, or build a new note instead).
+Before calling `update-note` or `append-to-note` on a note that may hold embedded files, images, scans, PDFs, or audio, run `list-attachments`. If any are present, either preserve them via `save-attachment` / `fetch-attachment` first, or avoid the full-body replace altogether (use `append-to-note`, or build a new note).
 
 ### Backslash escaping in JSON parameters
-Content containing literal backslashes (shell-escaped paths, Windows paths, regex patterns) must be double-escaped as `\\` when passed as a tool parameter, since the MCP transport is JSON. A failure to escape can cause notes to be created or updated with mangled or missing backslashes, sometimes without an explicit error.
+Literal backslashes (shell-escaped paths, Windows paths, regex patterns) must be double-escaped as `\\` when passed as a tool parameter, since the MCP transport is JSON. Unescaped backslashes can be mangled or dropped, sometimes with no explicit error.
 
 ### Prefer note `id` over `title` for follow-up calls
-Most read/update/move/delete-adjacent tools accept either `id` or `title`, but `id` (the CoreData identifier returned by `create-note` / `search-notes` / `list-notes`) is unique, while titles can collide. Capture and reuse the `id` for any multi-step operation on the same note within a task.
-
-### Folder creation is available directly
-Unlike Claude Desktop, `create-folder` exists here — Claude Code can create a missing destination folder itself rather than asking the user to do it in-app first. Confirm with the user before creating a folder if its necessity or name is ambiguous, per the shared "confirm before creating" principle.
+Titles can collide; `id` (the CoreData identifier returned by `create-note` / `search-notes` / `list-notes`) is unique. Capture and reuse it for any multi-step operation on the same note within a task.
 
 ### Permissions
-- **Automation permission**: the first tool call triggers a one-time macOS prompt asking to allow the host process (Terminal, iTerm, or VS Code — whichever launched Claude Code) to control Notes.app. This must be approved manually; it cannot be scripted.
-- **Full Disk Access** (optional): required only for `get-checklist-state`, checklist annotations inside `get-note-markdown`, and parts of `get-note-metadata` / `get-note-link`. All core create/read/update/move tools work without it. Run `doctor` to check current status.
-
----
+- **Automation**: the first tool call triggers a one-time macOS prompt to let the host process control Notes.app — the terminal app (Terminal, iTerm, VS Code) for Claude Code, or Claude.app for Claude Desktop. Each host is prompted separately; approval is manual and cannot be scripted.
+- **Full Disk Access** (optional): needed only for `get-checklist-state`, checklist annotations inside `get-note-markdown`, and parts of `get-note-metadata` / `get-note-link`. Grant it to the same host process. Core create/read/update/move tools work without it. Run `doctor` to check status.
 
 ## Starting planning notes for a new project
-Copy the six-section body from the **Planning Note Template** note into each new note, replacing placeholders with unit-specific content. Name each note `{NNN} - {Title}` — zero-padded 3 digits, one sequence shared across the whole project folder rather than reset per effort or note type; `{Title}` is a bare unit name without a repeated project name, since the folder already scopes that. Apply markup per the Style Guide note (checklists, tree structures, code, headings) together with the tool-quirk rules above.
+Copy the six-section body from the **Planning Note Template** note into each new note, replacing placeholders with unit-specific content. Name each note `{NNN} - {Title}` — zero-padded 3 digits, one sequence shared across the whole project folder rather than reset per effort or note type; `{Title}` is a bare unit name without a repeated project name, since the folder already scopes that. Apply markup per the Style Guide together with the tool-behavior rules above. Create the project subfolder with `create-folder` if missing, subject to user confirmation.
 
-- **In Claude Desktop**: confirm the relevant project subfolder exists first (ask the user to create it in-app if missing) before creating planning notes there.
-- **In Claude Code**: the subfolder can be created directly with `create-folder` if missing, subject to user confirmation.
+## Known issues
 
-## Notes
-- The Style Guide and Planning Note Template are themselves Apple Notes, not files — read them with the relevant read tool when needed rather than assuming their content from memory.
-- Tool success messages are not reliable evidence that markup rendered correctly in either environment; always re-read after a write.
-- If the two tool sets ever diverge further (e.g. the chat-interface connector gains folder or delete tools), revisit the Never Delete and folder-creation notes above rather than assuming this document stays accurate indefinitely.
+### `apple-notes` (sweetrb): hash requirement blocks some writes
+**Encountered in Claude Desktop only.**
+
+`update-note`, `delete-note`, `append-to-note`, and `batch-delete-notes` require
+an `expectedContentHash` from a prior `get-note-content` read. No read tool has
+been observed to return this value, so these four calls cannot be completed —
+don't retry with a fabricated hash; it fails safely by design but isn't
+recoverable. All other `apple-notes` tools (reads, `create-note`, `move-note`,
+`delete-folder`, etc.) are unaffected. Claude Code connects to a separate
+instance of this same server and has not hit this issue.
+
+### Claude Desktop: fallback for blocked writes
+A second server, **`Read and Write Apple Notes`**, may be configured. It has
+only `list_notes`, `get_note_content`, `update_note_content`, `add_note` —
+addressed by name + optional folder, no hash required.
+
+**Rule:** default to `apple-notes` for everything; fall back to
+`Read and Write Apple Notes` only for:
+- `update-note` → `update_note_content`
+- `append-to-note` → read with `get_note_content`, concatenate, write with
+  `update_note_content`
+
+No fallback exists for deletion — `delete-note`/`batch-delete-notes` failures
+still require manual deletion in Notes.app. Before writing via
+`Read and Write Apple Notes`, confirm the note name is unique within its
+folder (via its own `list_notes`) — it doesn't disambiguate duplicate titles
+by id the way sweetrb's tools do.
