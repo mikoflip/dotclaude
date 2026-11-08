@@ -1,4 +1,41 @@
 {
+  "permissions": {
+    "allow": [
+      "mcp__apple-notes__doctor",
+      "mcp__apple-notes__health-check",
+      "mcp__apple-notes__get-default-location",
+      "mcp__apple-notes__get-sync-status",
+      "mcp__apple-notes__get-notes-stats",
+      "mcp__apple-notes__list-notes",
+      "mcp__apple-notes__list-folders",
+      "mcp__apple-notes__list-accounts",
+      "mcp__apple-notes__list-shared-notes",
+      "mcp__apple-notes__list-attachments",
+      "mcp__apple-notes__search-notes",
+      "mcp__apple-notes__get-selected-notes",
+      "mcp__apple-notes__get-note-content",
+      "mcp__apple-notes__get-note-plaintext",
+      "mcp__apple-notes__get-note-markdown",
+      "mcp__apple-notes__get-note-by-id",
+      "mcp__apple-notes__get-note-details",
+      "mcp__apple-notes__get-note-metadata",
+      "mcp__apple-notes__get-note-link",
+      "mcp__apple-notes__get-checklist-state",
+      "mcp__apple-notes__export-notes-json",
+      "mcp__apple-notes__fetch-attachment",
+      "mcp__apple-notes__save-attachment",
+      "mcp__apple-notes__show-note",
+      "mcp__apple-notes__show-folder",
+      "mcp__apple-notes__show-account",
+      "mcp__apple-notes__show-attachment",
+      "mcp__apple-notes__create-note",
+      "mcp__apple-notes__create-folder",
+      "mcp__apple-notes__update-note",
+      "mcp__apple-notes__append-to-note",
+      "mcp__apple-notes__move-note",
+      "mcp__apple-notes__batch-move-notes"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
