@@ -49,7 +49,7 @@ src/
 
 | Skill | Trigger | Description |
 |---|---|---|
-| `generate-gitmessage` | `/generate-gitmessage` | Generate a git commit message from session context |
+| `generate-gitmessage` | `/generate-gitmessage` | Generate a git commit message from session context, following `knowledge/git-commit-message-format.md` |
 | `update-claude-md` | `/update-claude-md` | Update CLAUDE.md to reflect changes made in the session |
 
 ## Plugins
