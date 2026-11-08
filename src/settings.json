@@ -34,6 +34,9 @@
       "mcp__apple-notes__append-to-note",
       "mcp__apple-notes__move-note",
       "mcp__apple-notes__batch-move-notes"
+    ],
+    "additionalDirectories": [
+      "~/Developer/notes"
     ]
   },
   "hooks": {
